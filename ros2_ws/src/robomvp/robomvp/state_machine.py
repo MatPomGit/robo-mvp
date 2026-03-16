@@ -7,6 +7,7 @@ PICK_BOX -> ROTATE_180 -> NAVIGATE_TO_TARGET_MARKER ->
 PLACE_BOX -> FINISHED
 """
 
+import time
 from enum import IntEnum
 
 from robomvp.logger_utils import stamp
@@ -62,11 +63,22 @@ class StateMachine:
         self._box_marker_id = config.get('box_marker_id', 10)
         self._pickup_table_marker = config.get('table_markers', {}).get('pickup_table', 21)
         self._place_table_marker = config.get('table_markers', {}).get('place_table', 22)
-        self._target_marker = config.get('target_marker', 30)
 
         # Progi odległości
         self._stop_distance = config.get('stop_distance_threshold', 0.3)
         self._align_threshold = config.get('alignment_threshold', 0.05)
+
+        # Timeouty stanów (sekundy)
+        default_timeouts = {
+            'search_table': 20.0,
+            'detect_marker': 20.0,
+            'align_with_box': 10.0,
+            'navigate_to_target_marker': 25.0,
+        }
+        configured_timeouts = config.get('state_timeouts', {})
+        self._state_timeouts = {**default_timeouts, **configured_timeouts}
+
+        self._state_enter_time = time.monotonic()
 
     @property
     def current_state(self) -> State:
@@ -135,6 +147,14 @@ class StateMachine:
         new_name = STATE_NAMES[new_state]
         self._state = new_state
         self._log(stamp(f'Zmiana stanu: {old_name} -> {new_name}'))
+
+    def _is_timeout(self, key: str) -> bool:
+        """Sprawdza czy upłynął timeout dla bieżącego stanu."""
+        timeout_s = self._state_timeouts.get(key)
+        if timeout_s is None:
+            return False
+        elapsed = time.monotonic() - self._state_enter_time
+        return elapsed >= float(timeout_s)
 
     def _handle_search_table(self):
         """Stan: szukanie stołu z pudełkiem przez detekcję markera."""
