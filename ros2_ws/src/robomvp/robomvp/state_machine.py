@@ -2,9 +2,19 @@
 """Deterministyczny automat stanowy dla systemu RoboMVP.
 
 Implementuje sekwencję stanów scenariusza manipulacji:
-SEARCH_TABLE -> DETECT_MARKER -> ALIGN_WITH_BOX ->
-PICK_BOX -> ROTATE_180 -> NAVIGATE_TO_TARGET_MARKER ->
-PLACE_BOX -> FINISHED
+
+    SEARCH_TABLE  → wykryto marker stołu startowego (ID=21)
+    DETECT_MARKER → wykryto marker pudełka (ID=10)
+    ALIGN_WITH_BOX → offset korekcji poniżej progu
+    PICK_BOX      → sekwencja podniesienia zakończona
+    ROTATE_180    → sekwencja obrotu zakończona
+    NAVIGATE_TO_TARGET_MARKER → marker docelowego stołu (ID=22) w zasięgu
+    PLACE_BOX     → sekwencja odkładania zakończona
+    FINISHED
+
+Klasa ``StateMachine`` jest niezależna od ROS2 i może być testowana
+bez uruchamiania węzłów. Wymagana jest jedynie konfiguracja sceny
+(słownik z parametrami z pliku ``scene.yaml``) i opcjonalny logger.
 """
 
 import time

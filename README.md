@@ -93,14 +93,15 @@ dx, dy, dz = oczekiwana_pozycja - zmierzona_pozycja
 /camera/body/image_raw     /robomvp/state               Unitree SDK
 ```
 
-### Węzły ROS2
+### Węzły i moduły ROS2
 
-| Węzeł | Opis |
-|-------|------|
-| `/camera_interface` | Publikuje obrazy z obu kamer |
-| `/marker_detection` | Wykrywa markery AprilTag/QR |
-| `/marker_pose_estimator` | Oblicza pozycje 3D markerów |
-| `/robomvp_main` | Automat stanowy i wykonanie ruchów |
+| Węzeł / Moduł | Opis |
+|---------------|------|
+| `/camera_interface` | Publikuje obrazy z obu kamer (tryb demo lub sprzętowy) |
+| `/marker_detection` | Wykrywa markery AprilTag/QR w obrazach kamer |
+| `/marker_pose_estimator` | Oblicza pozycje 3D markerów na podstawie kalibracji kamery |
+| `/robomvp_main` | Główny węzeł: automat stanowy i koordynacja wykonania ruchów |
+| `unitree_robot_api` | Biblioteka sterowania sprzętowego – obsługuje LocoClient Unitree SDK 2 |
 
 ### Tematy ROS2
 
@@ -148,6 +149,7 @@ FINISHED
 - OpenCV (`pip install opencv-python`)
 - Biblioteka AprilTag (`pip install apriltag`)
 - `cv_bridge` (ROS2)
+- Unitree SDK 2 — **wymagany tylko w trybie robot** (`pip install unitree_sdk2py`)
 
 ### Instalacja zależności
 
@@ -155,6 +157,9 @@ FINISHED
 sudo apt update
 sudo apt install ros-humble-cv-bridge ros-humble-launch-ros
 pip install opencv-python apriltag numpy pyyaml
+
+# Tylko dla trybu robot (sterowanie sprzętowe Unitree G1 EDU):
+pip install unitree_sdk2py
 ```
 
 ### Budowanie pakietów
@@ -235,10 +240,11 @@ RoboMVP/
             │   ├── Offset.msg
             │   └── State.msg
             └── robomvp/
-                ├── camera_interface.py
-                ├── marker_detection.py
-                ├── marker_pose_estimator.py
-                ├── motion_sequences.py
-                ├── state_machine.py
-                └── main_node.py
+                ├── camera_interface.py       # Interfejs kamer (demo/sprzęt)
+                ├── marker_detection.py       # Detekcja markerów AprilTag/QR
+                ├── marker_pose_estimator.py  # Estymacja pozy 3D markerów
+                ├── motion_sequences.py       # Predefiniowane sekwencje ruchów
+                ├── state_machine.py          # Deterministyczny automat stanowy
+                ├── main_node.py              # Główny węzeł orkiestrujący pipeline
+                └── unitree_robot_api.py      # Integracja z Unitree SDK 2
 ```
