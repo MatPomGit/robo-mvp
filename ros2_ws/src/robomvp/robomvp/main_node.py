@@ -13,6 +13,8 @@ import yaml
 from rclpy.node import Node
 from std_msgs.msg import String
 
+from robomvp.logger_utils import stamp
+
 from robomvp.motion_sequences import (
     apply_offset_to_sequence,
     execute_sequence,
@@ -87,9 +89,10 @@ class RoboMVPMain(Node):
         # Aktualny offset korekcji
         self._current_offset = (0.0, 0.0, 0.0)
 
-        self.get_logger().info(
-            f'Węzeł główny RoboMVP uruchomiony (tryb: {self._mode})'
-        )
+        self.get_logger().info(stamp(
+            f'Węzeł główny RoboMVP uruchomiony (tryb: {self._mode}). '
+            'System gotowy do pracy. Oczekiwanie na dane z czujników.'
+        ))
 
     def _load_config(self, config_path: str) -> dict:
         """Wczytuje konfigurację sceny z pliku YAML."""
@@ -112,12 +115,19 @@ class RoboMVPMain(Node):
             try:
                 with open(config_path, 'r') as f:
                     cfg = yaml.safe_load(f)
-                self.get_logger().info(f'Załadowano konfigurację: {config_path}')
+                self.get_logger().info(stamp(f'Załadowano konfigurację sceny: {config_path}'))
                 return cfg or {}
             except Exception as e:
-                self.get_logger().warn(f'Błąd wczytywania konfiguracji: {e}')
+                self.get_logger().warn(stamp(
+                    f'Błąd wczytywania konfiguracji: {e}. '
+                    'Sprawdź poprawność pliku YAML i uprawnienia do odczytu. '
+                    'Używam domyślnych wartości konfiguracji.'
+                ))
 
-        self.get_logger().warn('Używam domyślnej konfiguracji sceny')
+        self.get_logger().warn(stamp(
+            'Nie znaleziono pliku konfiguracyjnego sceny. Używam domyślnej konfiguracji. '
+            'Podaj ścieżkę przez parametr ROS2: --ros-args -p scene_config_path:=<ścieżka>'
+        ))
         return {
             'box_marker_id': 10,
             'table_markers': {'pickup_table': 21, 'place_table': 22},
@@ -153,7 +163,11 @@ class RoboMVPMain(Node):
 
         # Sprawdź zakończenie
         if new_state == State.FINISHED:
-            self.get_logger().info('Scenariusz demonstracyjny zakończony pomyślnie!')
+            self.get_logger().info(stamp(
+                'Scenariusz demonstracyjny zakończony pomyślnie! '
+                'Robot odłożył pudełko na docelowy stół. '
+                'Możesz uruchomić nowy scenariusz lub zatrzymać system.'
+            ))
             play_success()
             self._timer.cancel()
 
@@ -162,37 +176,56 @@ class RoboMVPMain(Node):
         dx, dy, dz = self._current_offset
 
         if state == State.DETECT_MARKER:
+            self.get_logger().info(stamp(
+                'Rozpoczynam podejście do pierwszego stołu. '
+                'Robot wykona sekwencję ruchu do pozycji roboczej.'
+            ))
             self._publish_motion('approach_table')
             sequence = apply_offset_to_sequence(get_approach_table(), dx, dy, dz)
-            if not execute_sequence(sequence, robot_api=None, logger=self.get_logger()):
-                self.get_logger().error('Błąd sekwencji: approach_table')
+            execute_sequence(sequence, robot_api=None, logger=self.get_logger())
 
         elif state == State.ALIGN_WITH_BOX:
+            self.get_logger().info(stamp(
+                'Wyrównuję pozycję z pudełkiem. '
+                'Oczekiwanie na offset korekcji poniżej progu.'
+            ))
             self._publish_motion('align_with_box')
 
         elif state == State.PICK_BOX:
+            self.get_logger().info(stamp(
+                'Rozpoczynam sekwencję podniesienia pudełka. '
+                'Ramię opuszcza się do pozycji chwytu.'
+            ))
             self._publish_motion('pick_box')
             sequence = apply_offset_to_sequence(get_pick_box(), dx, dy, dz)
-            if not execute_sequence(sequence, robot_api=None, logger=self.get_logger()):
-                self.get_logger().error('Błąd sekwencji: pick_box')
+            execute_sequence(sequence, robot_api=None, logger=self.get_logger())
 
         elif state == State.ROTATE_180:
+            self.get_logger().info(stamp(
+                'Obracam robot o 180 stopni. '
+                'Robot zmienia orientację w kierunku docelowego stołu.'
+            ))
             self._publish_motion('rotate_180')
             sequence = get_rotate_180()
-            if not execute_sequence(sequence, robot_api=None, logger=self.get_logger()):
-                self.get_logger().error('Błąd sekwencji: rotate_180')
+            execute_sequence(sequence, robot_api=None, logger=self.get_logger())
 
         elif state == State.NAVIGATE_TO_TARGET_MARKER:
+            self.get_logger().info(stamp(
+                'Nawiguję do drugiego stołu. '
+                'Robot idzie w kierunku markera docelowego.'
+            ))
             self._publish_motion('walk_to_second_table')
             sequence = get_walk_to_second_table()
-            if not execute_sequence(sequence, robot_api=None, logger=self.get_logger()):
-                self.get_logger().error('Błąd sekwencji: walk_to_second_table')
+            execute_sequence(sequence, robot_api=None, logger=self.get_logger())
 
         elif state == State.PLACE_BOX:
+            self.get_logger().info(stamp(
+                'Odkładam pudełko na docelowy stół. '
+                'Ramię opuszcza się i zwalnia chwyt.'
+            ))
             self._publish_motion('place_box')
             sequence = apply_offset_to_sequence(get_place_box(), dx, dy, dz)
-            if not execute_sequence(sequence, robot_api=None, logger=self.get_logger()):
-                self.get_logger().error('Błąd sekwencji: place_box')
+            execute_sequence(sequence, robot_api=None, logger=self.get_logger())
 
         elif state == State.FINISHED:
             self._publish_motion('finished')
@@ -202,7 +235,7 @@ class RoboMVPMain(Node):
         msg = String()
         msg.data = command
         self._pub_motion.publish(msg)
-        self.get_logger().info(f'Komenda ruchu: {command}')
+        self.get_logger().info(stamp(f'Wysłano komendę ruchu: {command}'))
 
 
 def main(args=None):
