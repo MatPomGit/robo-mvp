@@ -102,6 +102,9 @@ def apply_offset_to_sequence(sequence: list, dx: float, dy: float, dz: float) ->
 def execute_sequence(sequence: list, robot_api=None, logger=None) -> bool:
     """Wykonuje sekwencję ruchów przez Unitree SDK lub loguje w trybie demo.
 
+    Po pomyślnym wykonaniu sekwencji odtwarza dwa krótkie sygnały dźwiękowe
+    (sukces). W przypadku błędu odtwarza jeden długi, niski sygnał (porażka).
+
     Args:
         sequence: Lista poz do wykonania.
         robot_api: Interfejs API robota Unitree (None w trybie demo).
@@ -110,6 +113,8 @@ def execute_sequence(sequence: list, robot_api=None, logger=None) -> bool:
     Returns:
         True jeśli sekwencja wykonana pomyślnie, False w przypadku błędu.
     """
+    from robomvp.sound_feedback import play_failure, play_success
+
     for i, pose in enumerate(sequence):
         if robot_api is not None:
             try:
@@ -119,6 +124,7 @@ def execute_sequence(sequence: list, robot_api=None, logger=None) -> bool:
             except Exception as e:
                 if logger:
                     logger.error(f'Błąd wykonania kroku {i}: {e}')
+                play_failure()
                 return False
         else:
             if logger:
@@ -128,4 +134,5 @@ def execute_sequence(sequence: list, robot_api=None, logger=None) -> bool:
                     f'z={pose.get("z", 0):.2f}, '
                     f'yaw={pose.get("yaw", 0):.2f}'
                 )
+    play_success()
     return True

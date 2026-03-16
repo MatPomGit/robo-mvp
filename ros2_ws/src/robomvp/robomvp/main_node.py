@@ -25,6 +25,7 @@ from robomvp.motion_sequences import (
 from robomvp.msg import MarkerPose, Offset
 from robomvp.msg import State as StateMsg
 from robomvp.offset_corrector import OffsetCorrector
+from robomvp.sound_feedback import play_success
 from robomvp.state_machine import State, StateMachine
 
 
@@ -153,6 +154,7 @@ class RoboMVPMain(Node):
         # Sprawdź zakończenie
         if new_state == State.FINISHED:
             self.get_logger().info('Scenariusz demonstracyjny zakończony pomyślnie!')
+            play_success()
             self._timer.cancel()
 
     def _execute_state_action(self, state: State):
@@ -162,7 +164,8 @@ class RoboMVPMain(Node):
         if state == State.DETECT_MARKER:
             self._publish_motion('approach_table')
             sequence = apply_offset_to_sequence(get_approach_table(), dx, dy, dz)
-            execute_sequence(sequence, robot_api=None, logger=self.get_logger())
+            if not execute_sequence(sequence, robot_api=None, logger=self.get_logger()):
+                self.get_logger().error('Błąd sekwencji: approach_table')
 
         elif state == State.ALIGN_WITH_BOX:
             self._publish_motion('align_with_box')
@@ -170,22 +173,26 @@ class RoboMVPMain(Node):
         elif state == State.PICK_BOX:
             self._publish_motion('pick_box')
             sequence = apply_offset_to_sequence(get_pick_box(), dx, dy, dz)
-            execute_sequence(sequence, robot_api=None, logger=self.get_logger())
+            if not execute_sequence(sequence, robot_api=None, logger=self.get_logger()):
+                self.get_logger().error('Błąd sekwencji: pick_box')
 
         elif state == State.ROTATE_180:
             self._publish_motion('rotate_180')
             sequence = get_rotate_180()
-            execute_sequence(sequence, robot_api=None, logger=self.get_logger())
+            if not execute_sequence(sequence, robot_api=None, logger=self.get_logger()):
+                self.get_logger().error('Błąd sekwencji: rotate_180')
 
         elif state == State.NAVIGATE_TO_TARGET_MARKER:
             self._publish_motion('walk_to_second_table')
             sequence = get_walk_to_second_table()
-            execute_sequence(sequence, robot_api=None, logger=self.get_logger())
+            if not execute_sequence(sequence, robot_api=None, logger=self.get_logger()):
+                self.get_logger().error('Błąd sekwencji: walk_to_second_table')
 
         elif state == State.PLACE_BOX:
             self._publish_motion('place_box')
             sequence = apply_offset_to_sequence(get_place_box(), dx, dy, dz)
-            execute_sequence(sequence, robot_api=None, logger=self.get_logger())
+            if not execute_sequence(sequence, robot_api=None, logger=self.get_logger()):
+                self.get_logger().error('Błąd sekwencji: place_box')
 
         elif state == State.FINISHED:
             self._publish_motion('finished')
