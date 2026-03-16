@@ -5,7 +5,8 @@ Zawiera zakodowane na stałe sekwencje trajektorii
 dla wszystkich etapów scenariusza manipulacji.
 """
 
-import time
+from robomvp.logger_utils import stamp
+from robomvp.sound_feedback import play_failure, play_success
 
 
 # Typ pozy: słownik z pozycją i orientacją (yaw w radianach)
@@ -110,6 +111,9 @@ def execute_sequence(
 ) -> bool:
     """Wykonuje sekwencję ruchów przez Unitree SDK lub loguje w trybie demo.
 
+    Po pomyślnym wykonaniu sekwencji odtwarza dwa krótkie sygnały dźwiękowe
+    (sukces). W przypadku błędu odtwarza jeden długi, niski sygnał (porażka).
+
     Args:
         sequence: Lista poz do wykonania.
         robot_api: Interfejs API robota Unitree (None w trybie demo).
@@ -120,7 +124,9 @@ def execute_sequence(
     Returns:
         True jeśli sekwencja wykonana pomyślnie, False w przypadku błędu.
     """
-    start = time.monotonic()
+    total = len(sequence)
+    if logger:
+        logger.info(stamp(f'Rozpoczynam wykonanie sekwencji {total} kroków.'))
     for i, pose in enumerate(sequence):
         elapsed_total = time.monotonic() - start
         if elapsed_total > total_timeout_s:
@@ -143,6 +149,7 @@ def execute_sequence(
                         'Sprawdź połączenie z robotem i stan interfejsu SDK. '
                         'Wykonanie sekwencji zakończone błędem.'
                     ))
+                play_failure()
                 return False
         else:
             if logger:
@@ -152,14 +159,8 @@ def execute_sequence(
                     f'y={pose.get("y", 0):.2f}, '
                     f'z={pose.get("z", 0):.2f}, '
                     f'yaw={pose.get("yaw", 0):.2f}'
-                )
-
-        elapsed_step = time.monotonic() - step_start
-        if elapsed_step > step_timeout_s:
-            if logger:
-                logger.error(
-                    f'Timeout kroku {i} po {elapsed_step:.2f}s (limit {step_timeout_s:.2f}s)'
-                )
-            return False
-
+                ))
+    if logger:
+        logger.info(stamp(f'Sekwencja {total} kroków wykonana pomyślnie.'))
+    play_success()
     return True

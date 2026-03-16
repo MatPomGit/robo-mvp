@@ -27,6 +27,7 @@ from robomvp.motion_sequences import (
 from robomvp.msg import MarkerPose, Offset
 from robomvp.msg import State as StateMsg
 from robomvp.offset_corrector import OffsetCorrector
+from robomvp.sound_feedback import play_success
 from robomvp.state_machine import State, StateMachine
 
 
@@ -176,6 +177,7 @@ class RoboMVPMain(Node):
                 'Robot odłożył pudełko na docelowy stół. '
                 'Możesz uruchomić nowy scenariusz lub zatrzymać system.'
             ))
+            play_success()
             self._timer.cancel()
 
     def _execute_state_action(self, state: State):
