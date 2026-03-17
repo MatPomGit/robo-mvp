@@ -162,7 +162,7 @@ FINISHED
 ```bash
 sudo apt update
 sudo apt install ros-humble-cv-bridge ros-humble-launch-ros
-pip install -r requirements.txt
+pip install opencv-python apriltag numpy pyyaml
 
 # Tylko dla trybu robot (sterowanie sprzętowe Unitree G1 EDU):
 pip install unitree_sdk2py
