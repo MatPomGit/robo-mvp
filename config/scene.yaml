@@ -9,11 +9,10 @@ table_markers:
   pickup_table: 21
   place_table: 22
 
-# Marker celu nawigacji
+# Marker celu nawigacji (robot zatrzymuje się gdy go zobaczy wystarczająco blisko)
 target_marker: 30
 
 # Oczekiwane pozycje markerów względem robota (metry)
-# Format: {x: float, y: float, z: float}
 expected_marker_positions:
   box:
     x: 0.0
@@ -37,9 +36,6 @@ offset_scale:
   dx: 1.0
   dy: 1.0
   dz: 1.0
-
-# Tryb demonstracji (demo_mode / robot_mode)
-mode: demo_mode
 
 # Timeouty stanów automatu (sekundy)
 state_timeouts:
