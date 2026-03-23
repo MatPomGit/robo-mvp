@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RoboMVP – tryb operatora</title>
+  <style>
+    :root {
+      --bg: #0a0f1c;
+      --panel: #121a2d;
+      --panel-2: #18233d;
+      --line: #2a3554;
+      --text: #eef3ff;
+      --muted: #aab6d4;
+      --brand: #6ea8fe;
+      --ok: #2ec27e;
+      --warn: #f6c453;
+      --danger: #ff6b6b;
+      --shadow: 0 18px 42px rgba(0,0,0,.28);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(110,168,254,.12), transparent 24%),
+        linear-gradient(180deg, #08101b 0%, #0b1220 100%);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 100vh;
+    }
+
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+      padding: 22px 18px;
+      border-right: 1px solid rgba(255,255,255,.08);
+      background: rgba(9, 14, 24, 0.84);
+      backdrop-filter: blur(8px);
+    }
+
+    .brand {
+      padding: 18px;
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(110,168,254,.15), rgba(110,168,254,.05));
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+
+    .brand h1 {
+      margin: 0 0 8px;
+      font-size: 1.3rem;
+      line-height: 1.15;
+    }
+
+    .muted { color: var(--muted); }
+
+    .search {
+      width: 100%;
+      padding: 12px 14px;
+      margin: 14px 0 18px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.1);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      outline: none;
+    }
+
+    nav a {
+      display: block;
+      text-decoration: none;
+      color: var(--muted);
+      padding: 10px 12px;
+      border-radius: 10px;
+      margin-bottom: 6px;
+      transition: .2s ease;
+    }
+
+    nav a:hover, nav a.active {
+      background: rgba(110,168,254,.14);
+      color: var(--text);
+    }
+
+    main { padding: 26px; }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.3fr .9fr;
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(20,27,46,.96), rgba(13,18,31,.98));
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+
+    .eyebrow {
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--brand);
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    h2, h3 { margin-top: 0; line-height: 1.15; }
+
+    .grid-2, .grid-3, .grid-4 {
+      display: grid;
+      gap: 16px;
+    }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+    .kpi {
+      padding: 14px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.04);
+      font-size: .92rem;
+      margin: 0 8px 8px 0;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--warn);
+      box-shadow: 0 0 0 4px rgba(246,196,83,.12);
+    }
+
+    .status-ready .status-dot { background: var(--ok); box-shadow: 0 0 0 4px rgba(46,194,126,.14); }
+    .status-warn .status-dot { background: var(--warn); }
+    .status-stop .status-dot { background: var(--danger); box-shadow: 0 0 0 4px rgba(255,107,107,.14); }
+
+    .section { margin-bottom: 20px; }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .op-btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      text-align: left;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+
+    .op-btn:hover { transform: translateY(-1px); background: rgba(255,255,255,.06); }
+    .op-btn strong { display: block; margin-bottom: 6px; }
+    .op-btn.safe { border-color: rgba(46,194,126,.25); }
+    .op-btn.warn { border-color: rgba(246,196,83,.25); }
+    .op-btn.danger { border-color: rgba(255,107,107,.35); background: rgba(255,107,107,.08); }
+
+    .code {
+      position: relative;
+      background: #0a0f1b;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      padding: 16px;
+      white-space: pre-wrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      line-height: 1.5;
+      overflow: auto;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      border: 0;
+      border-radius: 10px;
+      padding: 8px 10px;
+      cursor: pointer;
+      background: rgba(110,168,254,.18);
+      color: white;
+    }
+
+    .log {
+      background: #08101a;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      padding: 14px;
+      min-height: 220px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      overflow: auto;
+      line-height: 1.5;
+    }
+
+    .log-line { margin: 0 0 8px; color: #d8e2ff; }
+    .log-line small { color: var(--muted); }
+
+    .fsm {
+      display: grid;
+      grid-template-columns: repeat(8, minmax(120px, 1fr));
+      gap: 10px;
+      overflow: auto;
+      padding-bottom: 6px;
+    }
+
+    .fsm-state {
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.04);
+      min-height: 112px;
+    }
+
+    .fsm-state.active {
+      border-color: rgba(110,168,254,.4);
+      background: rgba(110,168,254,.12);
+    }
+
+    .fsm-state.done {
+      border-color: rgba(46,194,126,.35);
+      background: rgba(46,194,126,.10);
+    }
+
+    .fsm-state.blocked {
+      border-color: rgba(255,107,107,.35);
+      background: rgba(255,107,107,.10);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(255,255,255,.03);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      vertical-align: top;
+    }
+
+    th { background: rgba(110,168,254,.12); }
+
+    .check {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+
+    .check input { margin-top: 3px; }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: .84rem;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .notice {
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.08);
+      margin-top: 14px;
+    }
+
+    .notice.warn { background: rgba(246,196,83,.10); }
+    .notice.danger { background: rgba(255,107,107,.10); }
+    .notice.info { background: rgba(110,168,254,.10); }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 1160px) {
+      .layout { grid-template-columns: 1fr; }
+      aside {
+        position: relative;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid rgba(255,255,255,.08);
+      }
+      .hero, .grid-4, .grid-3, .grid-2, .button-grid { grid-template-columns: 1fr; }
+      main { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside>
+      <div class="brand">
+        <div class="eyebrow">RoboMVP</div>
+        <h1>Tryb operatora</h1>
+        <div class="muted">Osobna strona HTML do prowadzenia demo, kontroli FSM i szybkich reakcji operatorskich.</div>
+      </div>
+
+      <input id="globalSearch" class="search" type="search" placeholder="Szukaj sekcji, komendy, stanu..." />
+
+      <nav>
+        <a href="#dashboard">Dashboard</a>
+        <a href="#preflight">Pre-flight</a>
+        <a href="#runbook">Runbook demo</a>
+        <a href="#controls">Sterowanie</a>
+        <a href="#fsm">Mapa FSM</a>
+        <a href="#commands">Komendy ROS2</a>
+        <a href="#recovery">Odzyskiwanie</a>
+        <a href="#diagnostics">Diagnostyka</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section id="dashboard" class="section searchable">
+        <div class="hero">
+          <div class="card">
+            <div class="eyebrow">Stan sesji</div>
+            <h2>Konsola operatora demo</h2>
+            <p class="muted">Ta strona nie steruje robotem bezpośrednio. Porządkuje procedurę operacyjną, pokazuje zależności stanów i podaje gotowe komendy do użycia w terminalu ROS2.</p>
+            <div>
+              <span class="pill status-ready"><span class="status-dot"></span> ROS2: gotowy</span>
+              <span class="pill status-warn"><span class="status-dot"></span> Kamery: sprawdzić</span>
+              <span class="pill status-warn"><span class="status-dot"></span> Markery: sprawdzić</span>
+              <span class="pill status-stop"><span class="status-dot"></span> E-stop: uzbrojony operator</span>
+            </div>
+            <div class="grid-4" style="margin-top:16px;">
+              <div class="kpi"><strong>Stan FSM</strong><div class="muted" id="currentStateLabel">SEARCH_TABLE</div></div>
+              <div class="kpi"><strong>Tryb demo</strong><div class="muted">Manual launch</div></div>
+              <div class="kpi"><strong>Robot</strong><div class="muted">Unitree G1 EDU</div></div>
+              <div class="kpi"><strong>Teleop</strong><div class="muted">Wyłączony domyślnie</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="eyebrow">Szybka decyzja</div>
+            <h3>Czy można zacząć demo?</h3>
+            <div id="readinessBox" class="notice warn">Niepełna gotowość. Uzupełnij checklistę pre-flight.</div>
+            <div style="margin-top:14px;">
+              <button class="op-btn safe" id="checkReadinessBtn"><strong>Przelicz gotowość</strong><span class="muted">Na podstawie checklisty poniżej</span></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="preflight" class="section searchable">
+        <div class="card">
+          <div class="eyebrow">Pre-flight</div>
+          <h2>Checklista przed uruchomieniem</h2>
+          <div class="grid-2">
+            <div>
+              <label class="check"><input type="checkbox" class="preflight-item" /> <span>Ethernet UP, ping do 192.168.123.161 odpowiada.</span></label>
+              <label class="check"><input type="checkbox" class="preflight-item" /> <span>Workspace zbudowany, <code>source install/setup.bash</code> wykonane.</span></label>
+              <label class="check"><input type="checkbox" class="preflight-item" /> <span>Kamery publikują obraz lub świadomie ustawiono fallback <code>head_camera_device:=-1</code>.</span></label>
+              <label class="check"><input type="checkbox" class="preflight-item" /> <span>Znaczniki ID=10, 21, 22, 30 są obecne i czytelne.</span></label>
+            </div>
+            <div>
+              <label class="check"><input type="checkbox" class="preflight-item" /> <span>Strefa 1×4 m jest pusta, operator ma widok na całą trasę.</span></label>
+              <label class="check"><input type="checkbox" class="preflight-item" /> <span>Znane są komendy pause, reset, emergency_stop.</span></label>
+              <label class="check"><input type="checkbox" class="preflight-item" /> <span>Robot stoi stabilnie i można bezpiecznie przejść do Sport Mode.</span></label>
+              <label class="check"><input type="checkbox" class="preflight-item" /> <span>Po starcie oczekiwane węzły pojawiają się w <code>ros2 node list</code>.</span></label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="runbook" class="section searchable">
+        <div class="card">
+          <div class="eyebrow">Runbook</div>
+          <h2>Przebieg demonstracji krok po kroku</h2>
+          <div class="grid-3">
+            <div class="kpi"><strong>1. Start</strong><div class="muted">Uruchom launch, sprawdź obrazy i stan diagnostyk.</div></div>
+            <div class="kpi"><strong>2. Obserwacja</strong><div class="muted">Śledź przejścia: SEARCH_TABLE → ALIGN_WITH_BOX → PICK_BOX.</div></div>
+            <div class="kpi"><strong>3. Interwencja</strong><div class="muted">Przy odchyleniach użyj pause; przy zagrożeniu użyj e-stop.</div></div>
+          </div>
+          <div class="notice info">Operator powinien reagować na timeouty stanów ALIGN_WITH_BOX i NAVIGATE_TO_TARGET_MARKER zanim robot zakończy demonstrację w stanie błędu lub utknie na scenie.</div>
+        </div>
+      </section>
+
+      <section id="controls" class="section searchable">
+        <div class="card">
+          <div class="eyebrow">Sterowanie</div>
+          <h2>Szybkie akcje operatorskie</h2>
+          <div class="button-grid">
+            <button class="op-btn safe" data-command="ros2 launch robomvp demo.launch.py network_interface:=eth0 require_robot_connection:=true"><strong>Start systemu</strong><span class="muted">Uruchom pełny launch z robotem</span></button>
+            <button class="op-btn warn" data-command="ros2 service call /robomvp/pause std_srvs/SetBool \"{data: true}\""><strong>Pause</strong><span class="muted">Wstrzymaj automat</span></button>
+            <button class="op-btn safe" data-command="ros2 service call /robomvp/pause std_srvs/SetBool \"{data: false}\""><strong>Resume</strong><span class="muted">Wznów po korekcie</span></button>
+            <button class="op-btn danger" data-command="ros2 service call /robomvp/emergency_stop std_srvs/Trigger \"{}\""><strong>Emergency stop</strong><span class="muted">Natychmiastowe zatrzymanie</span></button>
+            <button class="op-btn warn" data-command="ros2 service call /robomvp/reset std_srvs/Trigger \"{}\""><strong>Reset FSM</strong><span class="muted">Powrót do SEARCH_TABLE</span></button>
+            <button class="op-btn safe" data-command="ros2 action send_goal --feedback /robomvp/manipulation_task robomvp/action/ManipulationTask \"{sequence_name: 'pick_box', apply_offset: true}\""><strong>Test PICK_BOX</strong><span class="muted">Ręczne wywołanie akcji</span></button>
+            <button class="op-btn safe" data-command="ros2 run teleop_twist_keyboard teleop_twist_keyboard"><strong>Teleop</strong><span class="muted">Ręczne sterowanie /cmd_vel</span></button>
+            <button class="op-btn warn" data-command="ros2 topic echo /diagnostics"><strong>Podgląd diagnostyk</strong><span class="muted">Bieżący health-check</span></button>
+          </div>
+          <div class="code" style="margin-top:16px;"><button class="copy-btn">Kopiuj</button><span id="selectedCommand">Kliknij przycisk akcji, aby wstawić gotową komendę.</span></div>
+        </div>
+      </section>
+
+      <section id="fsm" class="section searchable">
+        <div class="card">
+          <div class="eyebrow">FSM</div>
+          <h2>Mapa stanów i punkty decyzyjne operatora</h2>
+          <div class="fsm" id="fsmMap">
+            <div class="fsm-state active" data-state="SEARCH_TABLE"><strong>SEARCH_TABLE</strong><div class="muted">Szukaj ID=21</div></div>
+            <div class="fsm-state" data-state="DETECT_MARKER"><strong>DETECT_MARKER</strong><div class="muted">Podejście do stołu</div></div>
+            <div class="fsm-state" data-state="ALIGN_WITH_BOX"><strong>ALIGN_WITH_BOX</strong><div class="muted">Kontrola |dx|, |dz|</div></div>
+            <div class="fsm-state" data-state="PICK_BOX"><strong>PICK_BOX</strong><div class="muted">Sekwencja chwytu</div></div>
+            <div class="fsm-state" data-state="ROTATE_180"><strong>ROTATE_180</strong><div class="muted">Obrót 2×90°</div></div>
+            <div class="fsm-state" data-state="NAVIGATE_TO_TARGET_MARKER"><strong>NAVIGATE_TO_TARGET_MARKER</strong><div class="muted">Szukaj ID=22/30</div></div>
+            <div class="fsm-state" data-state="PLACE_BOX"><strong>PLACE_BOX</strong><div class="muted">Odłożenie pudełka</div></div>
+            <div class="fsm-state" data-state="FINISHED"><strong>FINISHED</strong><div class="muted">Reset przed kolejnym runem</div></div>
+          </div>
+          <div class="grid-2" style="margin-top:16px;">
+            <div class="notice warn">Najczęstszy punkt interwencji: <strong>ALIGN_WITH_BOX</strong>. Jeżeli offset nie maleje lub marker jest tracony, użyj pause i popraw geometrię sceny albo kalibrację kamery.</div>
+            <div class="notice info">W stanie <strong>NAVIGATE_TO_TARGET_MARKER</strong> obserwuj odległość do znacznika i pamiętaj, że odometria jest przybliżona. To pomoc operatorska, nie źródło precyzyjnej lokalizacji.</div>
+          </div>
+          <div style="margin-top:16px;">
+            <label class="muted" for="stateSelect">Symuluj aktywny stan:</label>
+            <select id="stateSelect" class="search" style="margin:8px 0 0;">
+              <option>SEARCH_TABLE</option>
+              <option>DETECT_MARKER</option>
+              <option>ALIGN_WITH_BOX</option>
+              <option>PICK_BOX</option>
+              <option>ROTATE_180</option>
+              <option>NAVIGATE_TO_TARGET_MARKER</option>
+              <option>PLACE_BOX</option>
+              <option>FINISHED</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section id="commands" class="section searchable">
+        <div class="card">
+          <div class="eyebrow">Komendy</div>
+          <h2>Najczęściej używane polecenia ROS2</h2>
+          <table>
+            <thead>
+              <tr><th>Cel</th><th>Komenda</th><th>Uwagi</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Lista węzłów</td><td><code>ros2 node list</code></td><td>Sprawdzenie kompletności systemu po starcie</td></tr>
+              <tr><td>Stan FSM</td><td><code>ros2 topic echo /robomvp/state</code></td><td>Najważniejszy kanał obserwacji logiki</td></tr>
+              <tr><td>Diagnostyki</td><td><code>ros2 topic echo /diagnostics</code></td><td>Wykrywanie STALE i ERROR</td></tr>
+              <tr><td>Odometria</td><td><code>ros2 topic echo /odom --field pose.pose.position</code></td><td>Orientacyjny ruch bazy</td></tr>
+              <tr><td>Graf systemu</td><td><code>rqt_graph</code></td><td>Szybka kontrola połączeń tematów</td></tr>
+              <tr><td>Monitor robotyczny</td><td><code>rqt_robot_monitor</code></td><td>Podgląd diagnostyk w GUI</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="recovery" class="section searchable">
+        <div class="card">
+          <div class="eyebrow">Odzyskiwanie</div>
+          <h2>Procedury po błędzie</h2>
+          <div class="grid-3">
+            <div class="kpi"><strong>Utrata markera</strong><div class="muted">Pause, przywróć widoczność tagu, resume lub reset.</div></div>
+            <div class="kpi"><strong>Timeout FSM</strong><div class="muted">Sprawdź /diagnostics i wykonaj reset przed nowym przebiegiem.</div></div>
+            <div class="kpi"><strong>Ryzyko kolizji</strong><div class="muted">Natychmiast e-stop, potem ocena fizyczna robota.</div></div>
+          </div>
+          <div class="code" style="margin-top:16px;"><button class="copy-btn">Kopiuj</button># 1. Emergency stop tylko jeśli istnieje ryzyko ruchowe
+ros2 service call /robomvp/emergency_stop std_srvs/Trigger "{}"
+
+# 2. Po ustabilizowaniu sytuacji sprawdź łączność
+ping 192.168.123.161
+
+# 3. Zresetuj logikę
+ros2 service call /robomvp/reset std_srvs/Trigger "{}"
+
+# 4. Uruchom launch ponownie
+ros2 launch robomvp demo.launch.py network_interface:=eth0 require_robot_connection:=true</div>
+        </div>
+      </section>
+
+      <section id="diagnostics" class="section searchable">
+        <div class="card">
+          <div class="eyebrow">Diagnostyka</div>
+          <h2>Dziennik operatorski</h2>
+          <div class="grid-2">
+            <div>
+              <div class="log" id="operatorLog">
+                <div class="log-line"><small>09:00:00</small> System operatora gotowy.</div>
+                <div class="log-line"><small>09:00:04</small> Oczekiwanie na checklistę pre-flight.</div>
+              </div>
+            </div>
+            <div>
+              <table>
+                <thead><tr><th>Status</th><th>Interpretacja</th></tr></thead>
+                <tbody>
+                  <tr><td><span class="badge">READY</span></td><td>Można rozpocząć demo przy spełnionej checkliście i bez alarmów.</td></tr>
+                  <tr><td><span class="badge">DEGRADED</span></td><td>System działa częściowo. Operator decyduje, czy demo jest akceptowalne.</td></tr>
+                  <tr><td><span class="badge">STALE</span></td><td>Brak świeżych wiadomości przez ponad 3 s. Wymaga diagnozy.</td></tr>
+                  <tr><td><span class="badge">ERROR</span></td><td>Błąd krytyczny połączenia, diagnostyki lub ruchu.</td></tr>
+                </tbody>
+              </table>
+              <div class="notice danger">Ta strona jest interaktywnym przewodnikiem dla operatora. Nie zastępuje fizycznych procedur bezpieczeństwa ani lokalnego nadzoru nad robotem.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const searchInput = document.getElementById('globalSearch');
+    const searchable = document.querySelectorAll('.searchable');
+    searchInput.addEventListener('input', e => {
+      const q = e.target.value.toLowerCase().trim();
+      searchable.forEach(section => {
+        section.classList.toggle('hidden', q && !section.innerText.toLowerCase().includes(q));
+      });
+    });
+
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const text = btn.parentElement.innerText.replace('Kopiuj', '').trim();
+        try {
+          await navigator.clipboard.writeText(text);
+          const old = btn.textContent;
+          btn.textContent = 'Skopiowano';
+          setTimeout(() => btn.textContent = old, 1200);
+        } catch {
+          btn.textContent = 'Błąd';
+          setTimeout(() => btn.textContent = 'Kopiuj', 1200);
+        }
+      });
+    });
+
+    const selectedCommand = document.getElementById('selectedCommand');
+    const operatorLog = document.getElementById('operatorLog');
+
+    function logLine(message) {
+      const now = new Date();
+      const ts = now.toLocaleTimeString('pl-PL');
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      line.innerHTML = `<small>${ts}</small> ${message}`;
+      operatorLog.prepend(line);
+    }
+
+    document.querySelectorAll('.op-btn[data-command]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cmd = btn.dataset.command;
+        selectedCommand.textContent = cmd;
+        logLine(`Wybrano akcję: ${btn.querySelector('strong').textContent}.`);
+      });
+    });
+
+    const preflightItems = document.querySelectorAll('.preflight-item');
+    const readinessBox = document.getElementById('readinessBox');
+    document.getElementById('checkReadinessBtn').addEventListener('click', () => {
+      const total = preflightItems.length;
+      const checked = [...preflightItems].filter(x => x.checked).length;
+      if (checked === total) {
+        readinessBox.className = 'notice info';
+        readinessBox.textContent = 'Gotowość potwierdzona. Można rozpocząć demo przy zachowaniu lokalnego nadzoru operatora.';
+        logLine('Checklista kompletna. Sesja oznaczona jako READY.');
+      } else if (checked >= total / 2) {
+        readinessBox.className = 'notice warn';
+        readinessBox.textContent = `Gotowość częściowa: ${checked}/${total}. Uzupełnij brakujące punkty przed startem.`;
+        logLine(`Checklista niepełna: ${checked}/${total}.`);
+      } else {
+        readinessBox.className = 'notice danger';
+        readinessBox.textContent = `Brak gotowości: ${checked}/${total}. Start demo niezalecany.`;
+        logLine('Próba startu odrzucona z powodu niepełnej checklisty.');
+      }
+    });
+
+    const stateSelect = document.getElementById('stateSelect');
+    const currentStateLabel = document.getElementById('currentStateLabel');
+    const fsmStates = document.querySelectorAll('.fsm-state');
+    const orderedStates = [
+      'SEARCH_TABLE',
+      'DETECT_MARKER',
+      'ALIGN_WITH_BOX',
+      'PICK_BOX',
+      'ROTATE_180',
+      'NAVIGATE_TO_TARGET_MARKER',
+      'PLACE_BOX',
+      'FINISHED'
+    ];
+
+    stateSelect.addEventListener('change', () => {
+      const active = stateSelect.value;
+      currentStateLabel.textContent = active;
+      const activeIndex = orderedStates.indexOf(active);
+      fsmStates.forEach(box => {
+        const idx = orderedStates.indexOf(box.dataset.state);
+        box.classList.remove('active', 'done', 'blocked');
+        if (idx < activeIndex) box.classList.add('done');
+        if (idx === activeIndex) box.classList.add('active');
+      });
+      logLine(`Symulowany stan FSM ustawiono na ${active}.`);
+    });
+
+    const navLinks = document.querySelectorAll('nav a');
+    const sections = document.querySelectorAll('main section[id]');
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          navLinks.forEach(link => link.classList.toggle('active', link.getAttribute('href') === '#' + entry.target.id));
+        }
+      });
+    }, { threshold: 0.35 });
+    sections.forEach(section => observer.observe(section));
+  </script>
+</body>
+</html>
